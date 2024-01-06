@@ -12,9 +12,10 @@ import (
 
 func main() {
 	startingConfiguration := parseFlags()
+	envConfiguration := loadEnvFile(startingConfiguration.envFilePath)
 	log := newLogger()
 
-	if err := run(startingConfiguration, log); err != nil {
+	if err := run(startingConfiguration, envConfiguration, log); err != nil {
 		panic(err)
 	}
 	log.Info("stopping service")
@@ -29,10 +30,10 @@ func newLogger() *slog.Logger {
 	return slog.New(jsonHandler)
 }
 
-func run(conf *flagsConf, log *slog.Logger) error {
+func run(conf *flagsConf, env environmentVars, log *slog.Logger) error {
 	router := mux.NewRouter()
 
-	server := handlers.NewServer(router, log)
+	server := handlers.NewServer(router, env, log)
 	if err := server.RegisterRoutes(); err != nil {
 		return err
 	}

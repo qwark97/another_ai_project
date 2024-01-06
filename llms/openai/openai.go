@@ -5,10 +5,13 @@ import (
 )
 
 type LLM struct {
+	key string
 }
 
-func New() LLM {
-	return LLM{}
+func New(key string) LLM {
+	return LLM{
+		key: key,
+	}
 }
 
 func (llm LLM) DetermineInteraction(instruction string) (model.InteractionMetadata, error) {

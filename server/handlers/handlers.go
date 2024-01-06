@@ -7,6 +7,7 @@ import (
 	"net/http"
 
 	"github.com/gorilla/mux"
+	"github.com/qwark97/assistant/llms/openai"
 	"github.com/qwark97/assistant/server/controller"
 	"github.com/qwark97/assistant/server/model"
 )
@@ -15,9 +16,10 @@ type Server struct {
 	router *mux.Router
 	cont   controller.Controller
 	log    *slog.Logger
+	env    map[string]string
 }
 
-func NewServer(router *mux.Router, log *slog.Logger) Server {
+func NewServer(router *mux.Router, env map[string]string, log *slog.Logger) Server {
 	cont := controller.New(log)
 	return Server{
 		router: router,
@@ -44,7 +46,7 @@ func (s Server) interaction(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	llm := defaultLLM()
+	llm := openai.New(s.env["OPENAI_KEY"])
 
 	category, typ := s.cont.RecogniseInteraction(data.Instruction, llm)
 	_ = category

@@ -2,9 +2,10 @@ package main
 
 import (
 	"fmt"
-	"log/slog"
 	"net/http"
 	"os"
+
+	"github.com/vargspjut/wlog"
 
 	"github.com/gorilla/mux"
 	"github.com/qwark97/assistant/server/handlers"
@@ -22,15 +23,11 @@ func main() {
 
 }
 
-func newLogger() *slog.Logger {
-	jsonHandler := slog.NewJSONHandler(os.Stdout, &slog.HandlerOptions{
-		AddSource: false,
-		Level:     slog.LevelDebug,
-	})
-	return slog.New(jsonHandler)
+func newLogger() wlog.Logger {
+	return wlog.New(os.Stdout, wlog.Dbg, false)
 }
 
-func run(conf *flagsConf, env environmentVars, log *slog.Logger) error {
+func run(conf *flagsConf, env environmentVars, log wlog.Logger) error {
 	router := mux.NewRouter()
 
 	server := handlers.NewServer(router, env, log)
@@ -40,6 +37,6 @@ func run(conf *flagsConf, env environmentVars, log *slog.Logger) error {
 	log.Info("registered routes")
 
 	addr := fmt.Sprintf("%s:%s", conf.host, conf.port)
-	log.Info("starts listening", "addr", addr)
+	log.Infof("starts listening at %s", addr)
 	return http.ListenAndServe(addr, router)
 }

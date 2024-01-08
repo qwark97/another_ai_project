@@ -1,10 +1,13 @@
 package handlers
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
-	"log/slog"
 	"net/http"
+	"time"
+
+	"github.com/vargspjut/wlog"
 
 	"github.com/gorilla/mux"
 	"github.com/qwark97/assistant/llms/openai"
@@ -15,16 +18,17 @@ import (
 type Server struct {
 	router *mux.Router
 	cont   controller.Controller
-	log    *slog.Logger
+	log    wlog.Logger
 	env    map[string]string
 }
 
-func NewServer(router *mux.Router, env map[string]string, log *slog.Logger) Server {
+func NewServer(router *mux.Router, env map[string]string, log wlog.Logger) Server {
 	cont := controller.New(log)
 	return Server{
 		router: router,
 		cont:   cont,
 		log:    log,
+		env:    env,
 	}
 }
 
@@ -35,6 +39,9 @@ func (s Server) RegisterRoutes() error {
 }
 
 func (s Server) interaction(w http.ResponseWriter, r *http.Request) {
+	ctx, cancel := context.WithTimeout(r.Context(), time.Minute*5)
+	defer cancel()
+
 	s.log.Debug("received")
 	w.Header().Add("Content-Type", "application/json")
 
@@ -46,13 +53,15 @@ func (s Server) interaction(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	llm := openai.New(s.env["OPENAI_KEY"])
+	llm := openai.New(s.env["OPENAI_KEY"], s.log)
 
-	category, typ := s.cont.RecogniseInteraction(data.Instruction, llm)
-	_ = category
-	_ = typ
+	category, typ := s.cont.RecogniseInteraction(ctx, data.Instruction, llm)
 
-	if err := json.NewEncoder(w).Encode(data); err != nil {
+	res := map[string]int{
+		"category": int(category),
+		"type":     int(typ),
+	}
+	if err := json.NewEncoder(w).Encode(res); err != nil {
 		s.log.Error(fmt.Sprintf("encode: %s", err.Error()))
 		w.WriteHeader(http.StatusInternalServerError)
 		return

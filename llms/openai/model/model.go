@@ -1,19 +1,20 @@
 package model
 
 type Response struct {
-	ID      string
-	Model   string
-	Choices []Choice
-	Usage   Usage
+	ID      string   `json:"id"`
+	Model   string   `json:"model"`
+	Choices []Choice `json:"choices"`
+	Usage   Usage    `json:"usage"`
 }
 
 type Choice struct {
-	Message Message `json:"message,omitempty"`
+	Message Message `json:"message"`
 }
 
 type Message struct {
-	Role    Role   `json:"role,omitempty"`
-	Content string `json:"content,omitempty"`
+	Role         Role          `json:"role"`
+	Content      string        `json:"content"`
+	FunctionCall *FunctionCall `json:"function_call,omitempty"`
 }
 
 type Role string
@@ -31,13 +32,54 @@ type Usage struct {
 }
 
 type Request struct {
-	Model    Model     `json:"model,omitempty"`
-	Messages []Message `json:"messages,omitempty"`
+	Model        Model        `json:"model"`
+	Messages     []Message    `json:"messages,omitempty"`
+	FunctionCall FunctionCall `json:"function_call,omitempty"`
+	Functions    []Function   `json:"functions,omitempty"`
 }
 
 type Model string
 
 const (
-	GPT_3_5_Turbo Model = "gpt-3.5-turbo"
-	GPT_4         Model = "gpt-4"
+	GPT_3_5_Turbo      Model = "gpt-3.5-turbo"
+	GPT_3_5_Turbo_0613 Model = "gpt-3.5-turbo-0613"
+	GPT_4              Model = "gpt-4"
 )
+
+type FunctionCall struct {
+	Name      string `json:"name"`
+	Arguments string `json:"arguments,omitempty"`
+}
+
+type Function struct {
+	Name        string     `json:"name"`
+	Description string     `json:"description"`
+	Parameters  Parameters `json:"parameters"`
+}
+
+type Parameters struct {
+	Type       ParameterType        `json:"type"`
+	Properties map[string]Parameter `json:"properties"`
+	Required   []string             `json:"required,omitempty"`
+}
+
+type Parameter struct {
+	Type        ParameterType `json:"type"`
+	Description string        `json:"description"`
+	Enum        []any         `json:"enum,omitempty"`
+	Items       *Item         `json:"items,omitempty"`
+}
+
+type ParameterType string
+
+const (
+	Object  ParameterType = "object"
+	Integer ParameterType = "integer"
+	String  ParameterType = "string"
+	Boolean ParameterType = "boolean"
+	Array   ParameterType = "array"
+)
+
+type Item struct {
+	Type ParameterType `json:"type"`
+}

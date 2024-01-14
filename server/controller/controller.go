@@ -2,15 +2,17 @@ package controller
 
 import (
 	"context"
-	"fmt"
 
 	"github.com/vargspjut/wlog"
 
 	"github.com/qwark97/assistant/llms/model"
+	"github.com/qwark97/assistant/server/controller/enrichers"
+	"github.com/qwark97/assistant/server/controller/query"
 )
 
 type LLM interface {
 	DetermineInteraction(ctx context.Context, instruction string) (model.InteractionMetadata, error)
+	query.LLM
 }
 
 type Controller struct {
@@ -23,13 +25,28 @@ func New(log wlog.Logger) Controller {
 	}
 }
 
-func (c Controller) RecogniseInteraction(ctx context.Context, instruction string, llm LLM) (Category, Type) {
+func (c Controller) Interact(ctx context.Context, instruction string, llm LLM) string {
 	interactionMetadata, err := llm.DetermineInteraction(ctx, instruction)
 	if err != nil {
 		c.log.Error(err.Error())
-		return Unrecognized, Query
+		return ""
 	}
-	fmt.Printf("interactionMetadata: %+v\n", interactionMetadata)
+	instructionEnricher := enrichers.New(instruction)
+	instructionEnricher.Type(interactionMetadata.Type)
+	instructionEnricher.Category(interactionMetadata.Category)
+	instructionEnricher.Tags(interactionMetadata.Tags)
 
-	return Unrecognized, Query
+	enrichedInstruction := instructionEnricher.Instruction()
+
+	var response string
+	switch enrichedInstruction.Type() {
+	case enrichers.Action:
+		response = "Nice action"
+	case enrichers.Query:
+		response = query.Answer(ctx, enrichedInstruction, llm)
+	default:
+		response = "Sorry, something went wrong"
+	}
+
+	return response
 }

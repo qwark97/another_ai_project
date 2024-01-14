@@ -1,5 +1,5 @@
 package model
 
-type ActionRequest struct {
+type InteractionRequest struct {
 	Instruction string `json:"instruction"`
 }

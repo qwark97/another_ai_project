@@ -45,7 +45,7 @@ func (s Server) interaction(w http.ResponseWriter, r *http.Request) {
 	s.log.Debug("received")
 	w.Header().Add("Content-Type", "application/json")
 
-	var data model.ActionRequest
+	var data model.InteractionRequest
 	err := json.NewDecoder(r.Body).Decode(&data)
 	if err != nil {
 		s.log.Error(fmt.Sprintf("decode: %s", err.Error()))

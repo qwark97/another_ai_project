@@ -55,11 +55,10 @@ func (s Server) interaction(w http.ResponseWriter, r *http.Request) {
 
 	llm := openai.New(s.env["OPENAI_KEY"], s.log)
 
-	category, typ := s.cont.RecogniseInteraction(ctx, data.Instruction, llm)
+	response := s.cont.Interact(ctx, data.Instruction, llm)
 
-	res := map[string]int{
-		"category": int(category),
-		"type":     int(typ),
+	res := map[string]string{
+		"response": response,
 	}
 	if err := json.NewEncoder(w).Encode(res); err != nil {
 		s.log.Error(fmt.Sprintf("encode: %s", err.Error()))

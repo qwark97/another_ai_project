@@ -45,13 +45,13 @@ func (llm LLM) DetermineInteraction(ctx context.Context, instruction string) (mo
 	if err != nil {
 		return result, err
 	}
-	result.Type = model.Type(t)
+	result.Type = t
 
 	cResp, err := llm.determineCategory(ctx, instruction)
 	if err != nil {
 		return result, err
 	}
-	var c2 map[string]model.Category
+	var c2 map[string]string
 	if err := parseTo(cResp, &c2); err != nil {
 		return result, err
 	}

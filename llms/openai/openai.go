@@ -30,6 +30,10 @@ func New(key string, log wlog.Logger) LLM {
 	}
 }
 
+func (llm LLM) Ask(ctx context.Context, query string, history ...apiModel.Message) (string, error) {
+	return "", nil
+}
+
 func (llm LLM) DetermineInteraction(ctx context.Context, instruction string) (model.InteractionMetadata, error) {
 	var result = model.InteractionMetadata{Instruction: instruction}
 

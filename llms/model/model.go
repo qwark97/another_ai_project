@@ -1,11 +1,8 @@
 package model
 
-type Category string
-type Type int
-
 type InteractionMetadata struct {
 	Instruction string   `json:"instruction"`
-	Category    Category `json:"category"`
-	Type        Type     `json:"type"`
+	Category    string   `json:"category"`
+	Type        int      `json:"type"`
 	Tags        []string `json:"tags"`
 }

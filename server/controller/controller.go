@@ -43,7 +43,7 @@ func (c Controller) Interact(ctx context.Context, instruction string, llm LLM) s
 	case enrichers.Action:
 		response = "Nice action"
 	case enrichers.Query:
-		response = query.Answer(ctx, enrichedInstruction, llm)
+		response = query.Answer(ctx, enrichedInstruction, llm, c.log)
 	default:
 		response = "Sorry, something went wrong"
 	}

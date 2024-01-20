@@ -11,6 +11,12 @@ type Choice struct {
 	Message Message `json:"message"`
 }
 
+type Prompt string
+
+type SystemPrompt Prompt
+type UserPrompt Prompt
+type AsistantPrompt Prompt
+
 type Message struct {
 	Role         Role          `json:"role"`
 	Content      string        `json:"content"`

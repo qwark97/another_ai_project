@@ -30,8 +30,30 @@ func New(key string, log wlog.Logger) LLM {
 	}
 }
 
-func (llm LLM) Ask(ctx context.Context, query string, history ...apiModel.Message) (string, error) {
-	return "", nil
+func (llm LLM) Ask(ctx context.Context, system apiModel.SystemPrompt, question apiModel.UserPrompt, history ...apiModel.Message) (string, error) {
+	questionPrompt := apiModel.Request{
+		Model: apiModel.GPT_3_5_Turbo_0613,
+		Messages: []apiModel.Message{
+			{
+				Role:    apiModel.System,
+				Content: string(system),
+			},
+			{
+				Role:    apiModel.User,
+				Content: string(question),
+			},
+		},
+	}
+	response, err := llm.api.askModel(ctx, questionPrompt)
+	if err != nil {
+		return err.Error(), err
+	}
+
+	if len(response.Choices) < 1 {
+		return "", fmt.Errorf("no choice")
+	}
+
+	return response.Choices[0].Message.Content, nil
 }
 
 func (llm LLM) DetermineInteraction(ctx context.Context, instruction string) (model.InteractionMetadata, error) {

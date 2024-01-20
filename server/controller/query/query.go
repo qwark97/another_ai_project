@@ -2,21 +2,36 @@ package query
 
 import (
 	"context"
+	"time"
 
-	apiModel "github.com/qwark97/assistant/llms/openai/model"
+	"github.com/qwark97/assistant/llms/openai/model"
+	"github.com/qwark97/assistant/server/controller/enrichers"
+	"github.com/qwark97/assistant/server/controller/query/prompts"
+	"github.com/vargspjut/wlog"
 )
 
-type Instruction interface {
-}
-
+//go:generate mockery --name LLM --with-expecter
 type LLM interface {
-	Ask(ctx context.Context, query string, history ...apiModel.Message) (string, error)
+	Ask(ctx context.Context, system model.SystemPrompt, question model.UserPrompt, history ...model.Message) (string, error)
 }
 
-func Answer(ctx context.Context, enrichedInstruction Instruction, llm LLM) string {
-	// prepare query context
+func Answer(ctx context.Context, enrichedInstruction enrichers.Instruction, llm LLM, log wlog.Logger) string {
+	data := prompts.AskQuestionVariables{
+		Facts: prompts.Facts{
+			TodayRFC850: time.Now().Format(time.RFC850),
+		},
+		ContextData: "Current Golang version is 1.21",
+	}
+	system, err := prompts.GenerateAskQuestionPrompt(data)
+	if err != nil {
+		return err.Error()
+	}
 
-	// ask model
+	response, err := llm.Ask(ctx, model.SystemPrompt(system), model.UserPrompt(enrichedInstruction.String()))
+	if err != nil {
+		log.Error(err)
+		return "No idea"
+	}
 
-	return ""
+	return response
 }

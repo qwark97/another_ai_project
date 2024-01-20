@@ -19,6 +19,7 @@ type api struct {
 }
 
 func (a api) askModel(ctx context.Context, r model.Request) (model.Response, error) {
+	var container model.Response
 	uri := fmt.Sprintf("%s%s", a.url, "chat/completions")
 
 	data, err := json.Marshal(r)
@@ -37,7 +38,6 @@ func (a api) askModel(ctx context.Context, r model.Request) (model.Response, err
 
 	c := &http.Client{}
 	response, err := c.Do(request)
-
 	if err != nil {
 		return model.Response{}, err
 	}
@@ -45,10 +45,9 @@ func (a api) askModel(ctx context.Context, r model.Request) (model.Response, err
 
 	if response.StatusCode != http.StatusOK {
 		a.log.Error(response.Status)
-		return model.Response{}, fmt.Errorf(response.Status)
+		return container, fmt.Errorf(response.Status)
 	}
 
-	var container model.Response
 	err = json.NewDecoder(response.Body).Decode(&container)
 	if err != nil {
 		return container, err

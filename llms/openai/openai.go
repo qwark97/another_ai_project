@@ -90,7 +90,7 @@ func (llm LLM) determineType(ctx context.Context, instruction string) (apiModel.
 				Content: instruction,
 			},
 		},
-		FunctionCall: apiModel.FunctionCall{
+		FunctionCall: &apiModel.FunctionCall{
 			Name: "determineInteractionType",
 		},
 		Functions: []apiModel.Function{
@@ -115,7 +115,7 @@ func (llm LLM) determineType(ctx context.Context, instruction string) (apiModel.
 }
 
 func (llm LLM) determineCategory(ctx context.Context, instruction string) (apiModel.Response, error) {
-	typePrompt := apiModel.Request{
+	categoryPrompt := apiModel.Request{
 		Model: apiModel.GPT_3_5_Turbo_0613,
 		Messages: []apiModel.Message{
 			{
@@ -123,7 +123,7 @@ func (llm LLM) determineCategory(ctx context.Context, instruction string) (apiMo
 				Content: instruction,
 			},
 		},
-		FunctionCall: apiModel.FunctionCall{
+		FunctionCall: &apiModel.FunctionCall{
 			Name: "determineInteractionCategory",
 		},
 		Functions: []apiModel.Function{
@@ -147,11 +147,11 @@ func (llm LLM) determineCategory(ctx context.Context, instruction string) (apiMo
 			},
 		},
 	}
-	return llm.api.askModel(ctx, typePrompt)
+	return llm.api.askModel(ctx, categoryPrompt)
 }
 
 func (llm LLM) enrichWithTags(ctx context.Context, instruction string) (apiModel.Response, error) {
-	typePrompt := apiModel.Request{
+	tagsPrompt := apiModel.Request{
 		Model: apiModel.GPT_3_5_Turbo_0613,
 		Messages: []apiModel.Message{
 			{
@@ -159,7 +159,7 @@ func (llm LLM) enrichWithTags(ctx context.Context, instruction string) (apiModel
 				Content: instruction,
 			},
 		},
-		FunctionCall: apiModel.FunctionCall{
+		FunctionCall: &apiModel.FunctionCall{
 			Name: "enrichWithTags",
 		},
 		Functions: []apiModel.Function{
@@ -182,5 +182,5 @@ func (llm LLM) enrichWithTags(ctx context.Context, instruction string) (apiModel
 			},
 		},
 	}
-	return llm.api.askModel(ctx, typePrompt)
+	return llm.api.askModel(ctx, tagsPrompt)
 }

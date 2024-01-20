@@ -32,10 +32,12 @@ type Usage struct {
 }
 
 type Request struct {
-	Model        Model        `json:"model"`
-	Messages     []Message    `json:"messages,omitempty"`
-	FunctionCall FunctionCall `json:"function_call,omitempty"`
-	Functions    []Function   `json:"functions,omitempty"`
+	Model        Model         `json:"model"`
+	Messages     []Message     `json:"messages"`
+	FunctionCall *FunctionCall `json:"function_call,omitempty"`
+	Functions    []Function    `json:"functions,omitempty"`
+	Temperature  *float64      `json:"temperature,omitempty"`
+	MaxTokens    *uint         `json:"max_tokens,omitempty"`
 }
 
 type Model string

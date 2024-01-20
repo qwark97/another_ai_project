@@ -1,0 +1,4 @@
+{{ template "role" }}
+{{ template "facts" .Facts }}
+{{ template "rules" }}
+{{ template "context" .ContextData }}

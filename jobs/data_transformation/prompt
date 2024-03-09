@@ -1,0 +1,75 @@
+You will receive a message in format: "path-to-file>>>>>file-content". Your goal is to semantically describe the message based on the path of the file (including it's name) and the content of the file. 
+
+Tags you will produce will be used to search and analyse the file content, therefore tags need to describe key points of the file: what it contains, what it is about, what technologies are described in the file, is it instruction to do something or just a note and so one. If the file content already has tags in it, include them. Generated tags must be in english.
+
+While generating the tags, consider using tags from following set in order to not use multiple tags that mean the same. Already existing tags should be used only when they fit to the processed file.
+Known tags: [${tags}]
+
+Response must be in format of the JSON array where each element is generated tag
+
+###EXAMPLE
+"./Knowledge/IT/Golang/Create HTTP test server">>>>>---
+tags:
+  - it
+  - golang
+  - code
+---
+```go
+package main
+
+import (
+	"net/http"
+	"net/http/httptest"
+)
+
+
+type fakeAPI struct {
+
+}
+func (api fakeAPI) ServeHTTP(w http.ResponseWriter, r *http.Request) {
+
+}
+
+func main() {
+	server := httptest.NewServer(fakeAPI{})
+}
+```
+["knowledge","it","golang","code","http","server","tests"]
+
+"./Knowledge/IT/Golang/Cyclic dependency between libraries">>>>>It is possible to have cyclic dependency between **libraries** where `lib A` imports from `lib B` and other way around. It's possible, compiler will not block it and such projects will build properly.
+
+Although,  thats really bad code smell. It causes significant problems especially when one of the packages wants to update it's major version (so also the `vX`  module number).
+
+Example how errors look like when such bad design is used and one wants to run `go mod tidy`:
+```sh
+» go mod tidy                                                  
+go: github.com/package1 imports
+        github.com/package2/v2 imports
+        github.com/nats-io/stan.go tested by
+        github.com/nats-io/stan.go.test imports
+        github.com/nats-io/nats-streaming-server/server: github.com/package3/v4@v4.0.0: go.mod has non-.../v4 module path "github.com/package3/v3" (and .../v4/go.mod does not exist) at revision v4.0.0
+```
+["knowledge","it","golang","libraries","cyclic dependency","sh","error","command","import errors"]
+
+"./Knowledge/Elektronika/Kable w instalacji">>>>>źródło: https://elektrykadlakazdego.pl/przewody-elektryczne-kolory/
+
+**Kolory izolacji wewnętrznej przewodów są nieprzypadkowe**
+
+W instalacjach elektrycznych napięcia przemiennego przewody dzielimy na 3 rodzaje:
+
+- **przewód fazowy – oznaczenie L** (jeśli jest więcej faz to L1, L2, L3)
+- **przewód neutralny – oznaczenie N**
+- **przewód ochronny – oznaczenie PE**
+
+
+**Prąd przemienny:** (np. w gniazdku)
+1. Przewód fazowy L – brązowy, **czarny**, czerwony, szary, biały (na tym przewodzie jest napięcie elektryczne).
+2. Przewód neutralny N – niebieski
+3. Przewód ochronny PE – żółto–zielony
+
+**Prąd stały:**
+1. Przewód z potencjałem “+” – czerwony
+2. Przewód z potencjałem “-” – **czarny** lub niebieski
+["knowledge","electronics","wires","electricity installation","cable colors","alternating current","direct current","safety","source"]
+###
+

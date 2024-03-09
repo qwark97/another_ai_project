@@ -1,5 +1,11 @@
 package enrichers
 
+import (
+	"time"
+
+	"github.com/google/uuid"
+)
+
 type Type int
 
 const (
@@ -26,4 +32,11 @@ var categories = map[string]Category{"other": Other, "todos": Todos, "notes": No
 
 func toCategory(c string) Category {
 	return categories[c]
+}
+
+type Message struct {
+	ID         uuid.UUID
+	GroupID    uuid.UUID
+	Producer   string
+	InsertTime time.Time
 }

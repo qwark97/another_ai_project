@@ -14,6 +14,7 @@ import (
 	"github.com/qwark97/assistant/llms/openai"
 	"github.com/qwark97/assistant/server/controller"
 	"github.com/qwark97/assistant/server/model"
+	"github.com/qwark97/assistant/server/storage/data"
 )
 
 type Server struct {
@@ -24,7 +25,7 @@ type Server struct {
 }
 
 func NewServer(router *mux.Router, env map[string]string, log wlog.Logger) Server {
-	cont := controller.New(log)
+	cont := controller.New(data.New(), log)
 	return Server{
 		router: router,
 		cont:   cont,
@@ -57,7 +58,7 @@ func (s Server) interaction(w http.ResponseWriter, r *http.Request) {
 
 	llm := openai.New(s.env["OPENAI_KEY"], s.log)
 
-	response := s.cont.Interact(ctx, data.Instruction, llm)
+	response := s.cont.Interact(ctx, data, llm)
 
 	res := map[string]string{
 		"response": response,

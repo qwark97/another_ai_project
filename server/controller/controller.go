@@ -3,11 +3,14 @@ package controller
 import (
 	"context"
 
+	"github.com/google/uuid"
 	"github.com/vargspjut/wlog"
 
 	"github.com/qwark97/assistant/llms/model"
 	"github.com/qwark97/assistant/server/controller/enrichers"
 	"github.com/qwark97/assistant/server/controller/query"
+	serverModel "github.com/qwark97/assistant/server/model"
+	storeModel "github.com/qwark97/assistant/server/storage/data/model"
 )
 
 type LLM interface {
@@ -15,17 +18,26 @@ type LLM interface {
 	query.LLM
 }
 
-type Controller struct {
-	log wlog.Logger
+type Store interface {
+	SaveHistoryRecord(ctx context.Context, message storeModel.Message) error
+	LoadHistoryRecords(ctx context.Context, groupID uuid.UUID) ([]storeModel.Message, error)
 }
 
-func New(log wlog.Logger) Controller {
+type Controller struct {
+	store Store
+	log   wlog.Logger
+}
+
+func New(store Store, log wlog.Logger) Controller {
 	return Controller{
-		log: log,
+		store: store,
+		log:   log,
 	}
 }
 
-func (c Controller) Interact(ctx context.Context, instruction string, llm LLM) string {
+func (c Controller) Interact(ctx context.Context, request serverModel.InteractionRequest, llm LLM) string {
+	instruction := request.Instruction
+	conversationID := request.ConversationID
 	interactionMetadata, err := llm.DetermineInteraction(ctx, instruction)
 	if err != nil {
 		c.log.Error(err.Error())
@@ -36,6 +48,13 @@ func (c Controller) Interact(ctx context.Context, instruction string, llm LLM) s
 	instructionEnricher.Category(interactionMetadata.Category)
 	instructionEnricher.Tags(interactionMetadata.Tags)
 
+	history, err := c.store.LoadHistoryRecords(ctx, conversationID)
+	if err != nil {
+		c.log.Error(err)
+		return "History failed"
+	}
+	instructionEnricher.History(transformHistory(history))
+
 	enrichedInstruction := instructionEnricher.Instruction()
 
 	var response string
@@ -44,9 +63,23 @@ func (c Controller) Interact(ctx context.Context, instruction string, llm LLM) s
 		response = "Nice action"
 	case enrichers.Query:
 		response = query.Answer(ctx, enrichedInstruction, llm, c.log)
+		// dokonczyc implementowanie history, obecny wstęp średnio jest poprawny
 	default:
 		response = "Sorry, something went wrong"
 	}
 
 	return response
+}
+
+func transformHistory(history []storeModel.Message) []enrichers.Message {
+	var res []enrichers.Message
+	for _, msg := range history {
+		res = append(res, enrichers.Message{
+			ID:         msg.ID,
+			GroupID:    msg.GroupID,
+			Producer:   string(msg.Producer),
+			InsertTime: msg.InsertTime,
+		})
+	}
+	return res
 }

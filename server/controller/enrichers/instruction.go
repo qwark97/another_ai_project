@@ -5,6 +5,7 @@ type Instruction struct {
 	typ         Type
 	category    Category
 	tags        []string
+	history     []Message
 }
 
 func (i Instruction) String() string {
@@ -21,4 +22,8 @@ func (i Instruction) Category() Category {
 
 func (i Instruction) Tags() []string {
 	return i.tags
+}
+
+func (i Instruction) History() []Message {
+	return i.history
 }

@@ -5,6 +5,7 @@ type Enricher struct {
 	typ         Type
 	category    Category
 	tags        []string
+	history     []Message
 }
 
 func New(instruction string) *Enricher {
@@ -23,6 +24,10 @@ func (e *Enricher) Category(c string) {
 
 func (e *Enricher) Tags(t []string) {
 	e.tags = t
+}
+
+func (e *Enricher) History(msgs []Message) {
+	e.history = msgs
 }
 
 func (e *Enricher) Instruction() Instruction {

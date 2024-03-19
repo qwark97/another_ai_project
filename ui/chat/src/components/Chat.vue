@@ -3,8 +3,8 @@
         <div class="chat-messages">
             <p v-for="msg in history" :class="msg.type">{{ msg.message }}</p>
         </div>
-        <div v-if="this.inputEnabled"  @keyup.enter="sendMessage" class="chat-input">
-            <input type="text" v-model="messageToSent" id="message-input" :placeholder="placeholder">            
+        <div v-if="this.inputEnabled" @keyup.enter="sendMessage" class="chat-input">
+            <input type="text" v-model="messageToSent" id="message-input" :placeholder="placeholder">
             <button id="send-button" @click="sendMessage">Send</button>
         </div>
     </div>
@@ -21,7 +21,9 @@ export default {
             socket: null,
             messageToSent: '',
             history: [],
-            inputEnabled: true
+            inputEnabled: true,
+            currentConversationID: null,
+            reconecting: false
         }
     },
     methods: {
@@ -30,7 +32,11 @@ export default {
                 return;
             }
             if (this.socket && this.socket.readyState === WebSocket.OPEN) {
-                this.socket.send(this.messageToSent);
+                let msg = {
+                    instruction: this.messageToSent,
+                    conversation_id: this.currentConversationID,
+                };
+                this.socket.send(JSON.stringify(msg));
                 let historyMsg = {
                     type: 'user',
                     message: this.messageToSent
@@ -40,30 +46,43 @@ export default {
             }
         },
         receiveMessage(message) {
+            console.log('Received message:', message);
+            let msg = JSON.parse(message);
+            console.log('Parsed message:', msg);
             let historyMsg = {
-                    type: 'assistant',
-                    message: message
-                }
+                type: 'assistant',
+                message: msg["response"]
+            }
+            this.currentConversationID = msg["converation_id"];
             this.history.push(historyMsg);
-        }
+        },
+        connect() {
+            this.socket = new WebSocket('ws://192.168.0.243:8080/api/v1/chat');
+            this.registerEvents();
+        },
+        registerEvents() {
+            this.socket.onopen = (event) => {
+                this.inputEnabled = true;
+                console.log('WebSocket is open now:', event);
+            };
+            this.socket.onclose = (event) => {
+                console.log('WebSocket is closed now:', event);
+                this.inputEnabled = false;
+                this.connect();
+            };
+            this.socket.onerror = (event) => {
+                console.error('WebSocket error observed:', event);
+            };
+            this.socket.onmessage = (event) => {
+                console.log('WebSocket message received:', event);
+                this.receiveMessage(event.data);
+            };
+        },
     },
     created() {
-        this.socket = new WebSocket('ws://localhost:8080/api/v1/chat');
-        this.socket.onopen = (event) => {
-            console.log('WebSocket is open now.');
-        };
-        this.socket.onclose = (event) => {
-            console.log('WebSocket is closed now:', event);
-            this.inputEnabled = false;
-        };
-        this.socket.onerror = (event) => {
-            console.error('WebSocket error observed:', event);
-        };
-        this.socket.onmessage = (event) => {
-            console.log('WebSocket message received:', event);
-            this.receiveMessage(event.data);
-        };
+        this.connect();
     },
+
     beforeDestroy() {
         console.log('Chat component is destroyed.');
         if (this.socket) {

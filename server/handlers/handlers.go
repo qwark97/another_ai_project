@@ -7,6 +7,7 @@ import (
 	"net/http"
 	"time"
 
+	"github.com/google/uuid"
 	"github.com/vargspjut/wlog"
 
 	"github.com/gorilla/mux"
@@ -55,13 +56,17 @@ func (s Server) interaction(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(http.StatusBadRequest)
 		return
 	}
+	if data.ConversationID == uuid.Nil {
+		data.ConversationID = uuid.New()
+	}
 
 	llm := openai.New(s.env["OPENAI_KEY"], s.log)
 
 	response := s.cont.Interact(ctx, data, llm)
 
 	res := map[string]string{
-		"response": response,
+		"response":       response,
+		"converation_id": data.ConversationID.String(),
 	}
 	if err := json.NewEncoder(w).Encode(res); err != nil {
 		s.log.Error(fmt.Sprintf("encode: %s", err.Error()))
@@ -87,27 +92,51 @@ func (s Server) chat(w http.ResponseWriter, r *http.Request) {
 	}
 	defer conn.Close()
 
-	// llm := openai.New(s.env["OPENAI_KEY"], s.log)
+	llm := openai.New(s.env["OPENAI_KEY"], s.log)
+	ctx := r.Context()
 
 	for {
 		messageType, p, err := conn.ReadMessage()
 		if err != nil {
-			s.log.Error(err)
+			if websocket.IsCloseError(err, websocket.CloseGoingAway, websocket.CloseAbnormalClosure) {
+				s.log.Info("closing connection")
+			} else {
+				s.log.Errorf("failed to read the message: %s", err.Error())
+			}
+			return
+		}
+		if messageType != websocket.TextMessage {
+			if err := conn.WriteMessage(messageType, []byte("Sorry, I can't handle this type of message")); err != nil {
+				s.log.Errorf("failed to write the message: %s", err.Error())
+				return
+			}
+		}
+
+		var data model.InteractionRequest
+		err = json.Unmarshal(p, &data)
+		if err != nil {
+			s.log.Errorf("failed to decode the message: %s", err.Error())
+			return
+		}
+		if data.ConversationID == uuid.Nil {
+			data.ConversationID = uuid.New()
+		}
+
+		response := s.cont.Interact(ctx, data, llm)
+
+		res := map[string]string{
+			"response":       response,
+			"converation_id": data.ConversationID.String(),
+		}
+		r, err := json.Marshal(res)
+		if err != nil {
+			s.log.Errorf("failed to encode the response message: %s", err.Error())
 			return
 		}
 
-		s.log.Infof("recv: %s", p)
-		s.log.Infof("type: %v", messageType)
-
-		respnse := fmt.Sprintf("echo: %s", p)
-		if err := conn.WriteMessage(messageType, []byte(respnse)); err != nil {
-			s.log.Error(err)
+		if err := conn.WriteMessage(messageType, r); err != nil {
+			s.log.Errorf("failed to write the response message: %s", err.Error())
 			return
-		}
-
-		if string(p) == "exit" {
-			break
 		}
 	}
-	s.log.Info("done")
 }

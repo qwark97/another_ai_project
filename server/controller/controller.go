@@ -2,9 +2,11 @@ package controller
 
 import (
 	"context"
+	"time"
 
 	"github.com/google/uuid"
 	"github.com/vargspjut/wlog"
+	"golang.org/x/sync/errgroup"
 
 	"github.com/qwark97/assistant/llms/model"
 	"github.com/qwark97/assistant/server/controller/enrichers"
@@ -36,8 +38,29 @@ func New(store Store, log wlog.Logger) Controller {
 }
 
 func (c Controller) Interact(ctx context.Context, request serverModel.InteractionRequest, llm LLM) string {
+	ctx, cacnel := context.WithTimeout(ctx, 5*time.Minute)
+	defer cacnel()
+
+	if request.ConversationID == uuid.Nil {
+		request.ConversationID = uuid.New()
+	}
+
+	eg, ctx := errgroup.WithContext(ctx)
+
 	instruction := request.Instruction
 	conversationID := request.ConversationID
+
+	history, err := c.store.LoadHistoryRecords(ctx, conversationID)
+	if err != nil {
+		c.log.Error(err)
+		return "History failed"
+	}
+	eg.Go(
+		func() error {
+			return c.store.SaveHistoryRecord(ctx, storeModel.NewMessage(conversationID, storeModel.User, instruction))
+		},
+	)
+
 	interactionMetadata, err := llm.DetermineInteraction(ctx, instruction)
 	if err != nil {
 		c.log.Error(err.Error())
@@ -48,11 +71,6 @@ func (c Controller) Interact(ctx context.Context, request serverModel.Interactio
 	instructionEnricher.Category(interactionMetadata.Category)
 	instructionEnricher.Tags(interactionMetadata.Tags)
 
-	history, err := c.store.LoadHistoryRecords(ctx, conversationID)
-	if err != nil {
-		c.log.Error(err)
-		return "History failed"
-	}
 	instructionEnricher.History(transformHistory(history))
 
 	enrichedInstruction := instructionEnricher.Instruction()
@@ -61,13 +79,15 @@ func (c Controller) Interact(ctx context.Context, request serverModel.Interactio
 	switch enrichedInstruction.Type() {
 	case enrichers.Action:
 		response = "Nice action"
+		fallthrough
 	case enrichers.Query:
 		response = query.Answer(ctx, enrichedInstruction, llm, c.log)
-		// dokonczyc implementowanie history, obecny wstęp średnio jest poprawny
 	default:
 		response = "Sorry, something went wrong"
 	}
-
+	if err = eg.Wait(); err != nil {
+		c.log.Error(err)
+	}
 	return response
 }
 

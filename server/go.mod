@@ -13,5 +13,6 @@ require (
 	github.com/stretchr/testify v1.8.4 // indirect
 	github.com/vargspjut/wlog v1.0.11 // indirect
 	golang.org/x/net v0.17.0 // indirect
+	golang.org/x/sync v0.6.0 // indirect
 	gopkg.in/yaml.v3 v3.0.1 // indirect
 )

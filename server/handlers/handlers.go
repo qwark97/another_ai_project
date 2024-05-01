@@ -118,9 +118,6 @@ func (s Server) chat(w http.ResponseWriter, r *http.Request) {
 			s.log.Errorf("failed to decode the message: %s", err.Error())
 			return
 		}
-		if data.ConversationID == uuid.Nil {
-			data.ConversationID = uuid.New()
-		}
 
 		response := s.cont.Interact(ctx, data, llm)
 

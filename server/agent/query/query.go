@@ -5,8 +5,8 @@ import (
 	"time"
 
 	"github.com/qwark97/assistant/llms/openai/model"
-	"github.com/qwark97/assistant/server/controller/enrichers"
-	"github.com/qwark97/assistant/server/controller/query/prompts"
+	"github.com/qwark97/assistant/server/agent/enrichers"
+	"github.com/qwark97/assistant/server/agent/query/prompts"
 	"github.com/vargspjut/wlog"
 )
 

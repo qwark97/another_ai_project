@@ -25,7 +25,8 @@ type Server struct {
 
 func NewServer(router *mux.Router, env map[string]string, log wlog.Logger) Server {
 	d := data.New()
-	agent := agent.New(d, log)
+	llms := agent.NewLLMsGroup(env, log)
+	agent := agent.New(d, llms, log)
 	return Server{
 		router: router,
 		agent:  agent,
@@ -62,7 +63,7 @@ func (s Server) interaction(w http.ResponseWriter, r *http.Request) {
 	response := s.agent.Interact(ctx, data)
 
 	res := model.InteractionResponse{
-		Answer:         response,
+		Answer:         <-response,
 		ConversationID: data.ConversationID,
 	}
 	if err := json.NewEncoder(w).Encode(res); err != nil {

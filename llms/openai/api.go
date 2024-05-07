@@ -9,7 +9,7 @@ import (
 
 	"github.com/vargspjut/wlog"
 
-	"github.com/qwark97/assistant/llms/openai/model"
+	"github.com/qwark97/assistant/llms/model"
 )
 
 type api struct {

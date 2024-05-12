@@ -19,6 +19,7 @@ type api struct {
 }
 
 func (a api) askModel(ctx context.Context, r model.Request) (model.Response, error) {
+	a.log.Debugf("full request: %+v", r)
 	var container model.Response
 	uri := fmt.Sprintf("%s%s", a.url, "chat/completions")
 
@@ -52,6 +53,7 @@ func (a api) askModel(ctx context.Context, r model.Request) (model.Response, err
 	if err != nil {
 		return container, err
 	}
+	a.log.Debugf("full response: %+v", container)
 
 	return container, nil
 }

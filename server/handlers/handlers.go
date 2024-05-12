@@ -71,7 +71,7 @@ func (s Server) interaction(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(http.StatusInternalServerError)
 		return
 	}
-	s.log.Debug("respond")
+	s.log.Debug("responded")
 }
 
 func (s Server) chat(w http.ResponseWriter, r *http.Request) {

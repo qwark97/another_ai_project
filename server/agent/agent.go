@@ -2,7 +2,6 @@ package agent
 
 import (
 	"context"
-	"fmt"
 	"time"
 
 	"github.com/google/uuid"
@@ -51,10 +50,10 @@ func New(store Store, llms LLMsGroup, log wlog.Logger) Agent {
 
 func (a Agent) Interact(ctx context.Context, request model.InteractionRequest) <-chan string {
 	ctx, cancel := context.WithTimeout(ctx, 5*time.Minute)
-	responsesCh := make(chan string)
+	responsesPipe := make(ResponsesPipe)
 	go func() {
 		defer cancel()
-		defer close(responsesCh)
+		defer close(responsesPipe)
 
 		if request.ConversationID == uuid.Nil {
 			request.ConversationID = uuid.New()
@@ -62,25 +61,61 @@ func (a Agent) Interact(ctx context.Context, request model.InteractionRequest) <
 
 		eg, ctx := errgroup.WithContext(ctx)
 
-		_, err := a.store.LoadHistoryRecords(ctx, request.ConversationID)
+		conversationHistory, err := a.store.LoadHistoryRecords(ctx, request.ConversationID)
 		if err != nil {
-			responsesCh <- err.Error()
+			responsesPipe.SendError(ctx, err)
 			return
 		}
 
 		eg.Go(func() error {
-			return a.store.SaveHistoryRecord(ctx, model.NewHistoryMessage(request.ConversationID, model.User, request.Instruction))
+			err := a.store.SaveHistoryRecord(ctx, model.NewHistoryMessage(request.ConversationID, model.User, request.Instruction))
+			if err != nil {
+				a.log.Error(err)
+			}
+			return err
 		})
 
 		interactionType, err := defineTypeOfInteraction(ctx, request.Instruction, a.llms.openai)
 		if err != nil {
-			responsesCh <- err.Error()
+			responsesPipe.SendError(ctx, err)
 			return
 		}
 		a.log.Debugf("interaction type: %s", interactionType)
 
-		responsesCh <- fmt.Sprintf("%d", interactionType)
-
+		switch interactionType {
+		case Question:
+			generatedMessages, err := a.answerQuestion(ctx, request.Instruction, responsesPipe, conversationHistory, a.llms.openai)
+			if err != nil {
+				responsesPipe.SendError(ctx, err)
+				return
+			}
+			eg.Go(func() error {
+				for _, msg := range generatedMessages {
+					err := a.store.SaveHistoryRecord(ctx, model.NewHistoryMessage(request.ConversationID, model.Assistant, msg))
+					if err != nil {
+						a.log.Error(err)
+					}
+				}
+				return nil
+			})
+		default:
+			a.reactToUnrecognisedInteraction(ctx, request.Instruction, responsesPipe)
+		}
+		eg.Wait()
 	}()
-	return responsesCh
+	return responsesPipe
+}
+
+func (a Agent) answerQuestion(ctx context.Context, instruction string, responsesPipe ResponsesPipe, conversationHistory []model.HistoryMessage, llm LLM) ([]string, error) {
+	generatedMessages, err := answerQuestion(ctx, instruction, responsesPipe, conversationHistory, llm)
+	if err != nil {
+		a.log.Error(err)
+		return generatedMessages, err
+	}
+	a.log.Debug("answered question successfully")
+	return generatedMessages, nil
+}
+
+func (a Agent) reactToUnrecognisedInteraction(ctx context.Context, _ string, responsesPipe ResponsesPipe) {
+	responsesPipe.Send(ctx, "I'm not sure what you mean... Could you repeat your question?")
 }

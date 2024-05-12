@@ -28,18 +28,10 @@ func New(key string, log wlog.Logger) LLM {
 }
 
 func (llm LLM) Ask(ctx context.Context, question model.Question, history ...model.Message) (string, error) {
+	messages := prepareMessages(question, history)
 	questionPrompt := model.Request{
-		Model: model.GPT_3_5_Turbo,
-		Messages: []model.Message{
-			{
-				Role:    "system",
-				Content: question.SystemPrompt,
-			},
-			{
-				Role:    "user",
-				Content: question.UserQuestion,
-			},
-		},
+		Model:    model.GPT_3_5_Turbo,
+		Messages: messages,
 	}
 	response, err := llm.api.askModel(ctx, questionPrompt)
 	if err != nil {
@@ -51,4 +43,21 @@ func (llm LLM) Ask(ctx context.Context, question model.Question, history ...mode
 	}
 
 	return response.Choices[0].Message.Content, nil
+}
+
+func prepareMessages(question model.Question, history []model.Message) []model.Message {
+	messages := []model.Message{
+		{
+			Role:    "system",
+			Content: question.SystemPrompt,
+		},
+	}
+
+	messages = append(messages, history...)
+
+	messages = append(messages, model.Message{
+		Role:    "user",
+		Content: question.UserQuestion,
+	})
+	return messages
 }

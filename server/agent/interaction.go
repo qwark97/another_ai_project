@@ -26,9 +26,9 @@ func defineTypeOfInteraction(ctx context.Context, text string, llm LLM) (Interac
 	question := llmTypes.Question{
 		SystemPrompt: `
 		You need to categorize user's input as one of the following category:
-		0 = question - input which question or seems like it (it asks is about giving, showing, saying, explaining etc. something)
+		0 = question - input which is a question or seems like it (it asks is about giving, showing, saying, explaining etc. something)
 		1 = command - input which wants you to do something or perform some action
-		2 = information - input which is some statement, new information or is about remembering something
+		2 = information - input which is not a question but provides some new information for you or clearly asks you to remember something
 		3 = other - input that does not fit into any other category
 
 		As an answer you must return only one numer, nothing else. The number must be related with the category.

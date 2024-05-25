@@ -13,25 +13,19 @@ import (
 	"github.com/gorilla/mux"
 	"github.com/qwark97/assistant/server/agent"
 	"github.com/qwark97/assistant/server/model"
-	"github.com/qwark97/assistant/server/storage/data"
 )
 
 type Server struct {
 	router *mux.Router
 	agent  agent.Agent
 	log    wlog.Logger
-	env    map[string]string
 }
 
-func NewServer(router *mux.Router, env map[string]string, log wlog.Logger) Server {
-	d := data.New()
-	llms := agent.NewLLMsGroup(env, log)
-	agent := agent.New(d, llms, log)
+func NewServer(router *mux.Router, agent agent.Agent, log wlog.Logger) Server {
 	return Server{
 		router: router,
 		agent:  agent,
 		log:    log,
-		env:    env,
 	}
 }
 

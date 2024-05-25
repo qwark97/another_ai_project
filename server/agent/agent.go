@@ -24,10 +24,15 @@ type Store interface {
 	LoadHistoryRecords(ctx context.Context, groupID uuid.UUID) ([]model.HistoryMessage, error)
 }
 
+type Embedding interface {
+	Load(ctx context.Context, question string) (string, error)
+}
+
 type Agent struct {
-	store Store
-	llms  LLMsGroup
-	log   wlog.Logger
+	store     Store
+	embedding Embedding
+	llms      LLMsGroup
+	log       wlog.Logger
 }
 
 type LLMsGroup struct {
@@ -40,11 +45,12 @@ func NewLLMsGroup(env map[string]string, log wlog.Logger) LLMsGroup {
 	}
 }
 
-func New(store Store, llms LLMsGroup, log wlog.Logger) Agent {
+func New(store Store, embedding Embedding, llms LLMsGroup, log wlog.Logger) Agent {
 	return Agent{
-		store: store,
-		llms:  llms,
-		log:   log,
+		store:     store,
+		embedding: embedding,
+		llms:      llms,
+		log:       log,
 	}
 }
 
@@ -67,6 +73,12 @@ func (a Agent) Interact(ctx context.Context, request model.InteractionRequest) <
 			return
 		}
 
+		requestContext, err := a.embedding.Load(ctx, request.Instruction)
+		if err != nil {
+			responsesPipe.SendError(ctx, err)
+			return
+		}
+
 		eg.Go(func() error {
 			err := a.store.SaveHistoryRecord(ctx, model.NewHistoryMessage(request.ConversationID, model.User, request.Instruction))
 			if err != nil {
@@ -84,7 +96,7 @@ func (a Agent) Interact(ctx context.Context, request model.InteractionRequest) <
 
 		switch interactionType {
 		case Question:
-			generatedMessages, err := a.answerQuestion(ctx, request.Instruction, responsesPipe, conversationHistory, a.llms.openai)
+			generatedMessages, err := a.answerQuestion(ctx, request.Instruction, requestContext, responsesPipe, conversationHistory, a.llms.openai)
 			if err != nil {
 				responsesPipe.SendError(ctx, err)
 				return
@@ -106,8 +118,8 @@ func (a Agent) Interact(ctx context.Context, request model.InteractionRequest) <
 	return responsesPipe
 }
 
-func (a Agent) answerQuestion(ctx context.Context, instruction string, responsesPipe ResponsesPipe, conversationHistory []model.HistoryMessage, llm LLM) ([]string, error) {
-	generatedMessages, err := answerQuestion(ctx, instruction, responsesPipe, conversationHistory, llm)
+func (a Agent) answerQuestion(ctx context.Context, instruction, instructionContext string, responsesPipe ResponsesPipe, conversationHistory []model.HistoryMessage, llm LLM) ([]string, error) {
+	generatedMessages, err := answerQuestion(ctx, instruction, instructionContext, responsesPipe, conversationHistory, llm)
 	if err != nil {
 		a.log.Error(err)
 		return generatedMessages, err

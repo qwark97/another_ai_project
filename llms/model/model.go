@@ -18,6 +18,19 @@ type Response struct {
 	Usage   Usage    `json:"usage"`
 }
 
+type EmbeddingResponse struct {
+	Data []EmbeddingData `json:"data"`
+}
+
+type EmbeddingData struct {
+	Vector []float32 `json:"embedding"`
+}
+
+type EmbeddingRequest struct {
+	Input string `json:"input"`
+	Model Model  `json:"model"`
+}
+
 type Choice struct {
 	Message Message `json:"message"`
 }
@@ -40,9 +53,10 @@ type Request struct {
 type Model string
 
 const (
-	GPT_3_5_Turbo      Model = "gpt-3.5-turbo"
-	GPT_3_5_Turbo_0613 Model = "gpt-3.5-turbo-0613"
-	GPT_4              Model = "gpt-4"
+	GPT_3_5_Turbo          Model = "gpt-3.5-turbo"
+	GPT_3_5_Turbo_0613     Model = "gpt-3.5-turbo-0613"
+	GPT_4                  Model = "gpt-4"
+	Text_Embedding_Ada_002 Model = "text-embedding-ada-002"
 )
 
 type FunctionCall struct {

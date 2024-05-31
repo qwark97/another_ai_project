@@ -2,6 +2,7 @@ package embedding
 
 import (
 	"context"
+	"fmt"
 	"time"
 
 	qdrant "github.com/qdrant/go-client/qdrant"
@@ -57,8 +58,45 @@ func (e *Embedding) Disconnect() {
 	e.log.Info("embedding engine disconnected")
 }
 
-func (e Embedding) Load(ctx context.Context, question string) (string, error) {
-	_ = qdrant.NewCollectionsClient(e.conn)
+func (e Embedding) Load(ctx context.Context, collectionName string, vector []float32, limit uint64) (string, error) {
+	client := qdrant.NewPointsClient(e.conn)
 
-	return "", nil
+	result, err := client.Search(ctx, &qdrant.SearchPoints{
+		CollectionName: collectionName,
+		Vector:         vector,
+		Limit:          limit,
+		// Filter: &qdrant.Filter{
+		// 	Should: []*qdrant.Condition{
+		// 		{
+		// 			ConditionOneOf: &qdrant.Condition_Field{
+		// 				Field: &qdrant.FieldCondition{
+		// 					Key: "city",
+		// 					Match: &qdrant.Match{
+		// 						MatchValue: &qdrant.Match_Keyword{
+		// 							Keyword: "London",
+		// 						},
+		// 					},
+		// 				},
+		// 			},
+		// 		},
+		// 	},
+		// },
+		WithVectors: &qdrant.WithVectorsSelector{SelectorOptions: &qdrant.WithVectorsSelector_Enable{Enable: true}},
+		WithPayload: &qdrant.WithPayloadSelector{SelectorOptions: &qdrant.WithPayloadSelector_Enable{Enable: true}},
+	})
+	if err != nil {
+		return "", err
+	}
+	results := result.GetResult()
+	if len(results) == 0 {
+		return "", fmt.Errorf("no context from vector store")
+	}
+
+	var s string
+	for _, res := range results {
+		payload := res.GetPayload()["info"]
+		s += payload.GetStringValue() + "\n"
+	}
+
+	return s, nil
 }

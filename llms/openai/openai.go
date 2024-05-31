@@ -9,7 +9,10 @@ import (
 	"github.com/qwark97/assistant/llms/model"
 )
 
-const url = "https://api.openai.com/v1/"
+const (
+	url          = "https://api.openai.com/v1/"
+	embeddingURL = "https://api.openai.com/v1/embeddings"
+)
 
 type LLM struct {
 	api api
@@ -19,9 +22,10 @@ type LLM struct {
 func New(key string, log wlog.Logger) LLM {
 	return LLM{
 		api: api{
-			log: log,
-			url: url,
-			key: key,
+			log:          log,
+			url:          url,
+			embeddingURL: embeddingURL,
+			key:          key,
 		},
 		log: log,
 	}
@@ -60,4 +64,21 @@ func prepareMessages(question model.Question, history []model.Message) []model.M
 		Content: question.UserQuestion,
 	})
 	return messages
+}
+
+func (llm LLM) GetEmbeddings(ctx context.Context, instruction string) ([]float32, error) {
+	embeddingRequest := model.EmbeddingRequest{
+		Input: instruction,
+		Model: model.Text_Embedding_Ada_002,
+	}
+	response, err := llm.api.getEmbeddings(ctx, embeddingRequest)
+	if err != nil {
+		return nil, err
+	}
+
+	if len(response.Data) < 1 {
+		return nil, fmt.Errorf("no embeddings")
+	}
+
+	return response.Data[0].Vector, nil
 }

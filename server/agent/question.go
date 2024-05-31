@@ -2,21 +2,22 @@ package agent
 
 import (
 	"context"
+	"fmt"
 
 	llmTypes "github.com/qwark97/assistant/llms/model"
 	"github.com/qwark97/assistant/server/model"
 )
 
-func answerQuestion(ctx context.Context, instruction string, responsesPipe ResponsesPipe, conversationHistory []model.HistoryMessage, llm LLM) ([]string, error) {
+func answerQuestion(ctx context.Context, instruction, instructionContext string, responsesPipe ResponsesPipe, conversationHistory []model.HistoryMessage, llm LLM) ([]string, error) {
 	question := llmTypes.Question{
-		SystemPrompt: `
+		SystemPrompt: fmt.Sprintf(`
 		You are helpfull assistant, answer the question using provided >>CONTEXT<< and history of our conversation. 
 		Your answers should be sincere and truthful. If you don't know an answer, respond with "Sorry, I don't know"
 
 		>>CONTEXT<<
-		
+		%s
 		>>CONTEXT<<
-		`,
+		`, instructionContext),
 		UserQuestion: instruction,
 	}
 

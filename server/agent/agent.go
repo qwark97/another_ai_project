@@ -17,6 +17,7 @@ import (
 
 type LLM interface {
 	Ask(ctx context.Context, question llmTypes.Question, history ...llmTypes.Message) (string, error)
+	GetEmbeddings(ctx context.Context, instruction string) ([]float32, error)
 }
 
 type Store interface {
@@ -25,7 +26,7 @@ type Store interface {
 }
 
 type Embedding interface {
-	Load(ctx context.Context, question string) (string, error)
+	Load(ctx context.Context, collectionName string, vector []float32, limit uint64) (string, error)
 }
 
 type Agent struct {
@@ -36,7 +37,7 @@ type Agent struct {
 }
 
 type LLMsGroup struct {
-	openai openai.LLM
+	openai LLM
 }
 
 func NewLLMsGroup(env map[string]string, log wlog.Logger) LLMsGroup {
@@ -73,11 +74,18 @@ func (a Agent) Interact(ctx context.Context, request model.InteractionRequest) <
 			return
 		}
 
-		requestContext, err := a.embedding.Load(ctx, request.Instruction)
+		questionVector, err := a.llms.openai.GetEmbeddings(ctx, request.Instruction)
 		if err != nil {
 			responsesPipe.SendError(ctx, err)
 			return
 		}
+
+		requestContext, err := a.embedding.Load(ctx, "about-people", questionVector, 1)
+		if err != nil {
+			responsesPipe.SendError(ctx, err)
+			return
+		}
+		a.log.Debugf("request context: %s", requestContext)
 
 		eg.Go(func() error {
 			err := a.store.SaveHistoryRecord(ctx, model.NewHistoryMessage(request.ConversationID, model.User, request.Instruction))

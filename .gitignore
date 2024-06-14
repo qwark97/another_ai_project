@@ -3,3 +3,4 @@
 __debug*
 .DS_store
 venv
+.qdrant

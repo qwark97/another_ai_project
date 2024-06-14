@@ -6,28 +6,30 @@ import (
 	"strings"
 
 	"github.com/google/uuid"
-	"github.com/qwark97/assistant/server/storage/data/model"
+	"github.com/qwark97/another_ai_project/server/model"
 )
 
-type Store struct {
+type Data struct {
 	memory map[string]any
 }
 
-func New() *Store {
-	return &Store{memory: make(map[string]any)}
+func New() *Data {
+	return &Data{memory: make(map[string]any)}
 }
 
-func (s *Store) SaveHistoryRecord(ctx context.Context, message model.Message) error {
+func (s *Data) SaveHistoryRecord(ctx context.Context, message model.HistoryMessage) error {
 	s.memory[fmt.Sprintf("history_%s", message.ID.String())] = message
 	return nil
 }
 
-func (s *Store) LoadHistoryRecords(ctx context.Context, groupID uuid.UUID) ([]model.Message, error) {
-	var res []model.Message
+func (s *Data) LoadHistoryRecords(ctx context.Context, conversationID uuid.UUID) ([]model.HistoryMessage, error) {
+	var res []model.HistoryMessage
 	for key, val := range s.memory {
 		if strings.HasPrefix(key, "history") {
-			msg := val.(model.Message)
-			res = append(res, msg)
+			msg := val.(model.HistoryMessage)
+			if msg.ConversationID == conversationID {
+				res = append(res, msg)
+			}
 		}
 	}
 	return res, nil

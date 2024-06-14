@@ -8,7 +8,8 @@ import (
 	"github.com/vargspjut/wlog"
 
 	"github.com/gorilla/mux"
-	"github.com/qwark97/assistant/server/handlers"
+	"github.com/qwark97/another_ai_project/server/ai"
+	"github.com/qwark97/another_ai_project/server/handlers"
 )
 
 func main() {
@@ -30,7 +31,8 @@ func newLogger() wlog.Logger {
 func run(conf *flagsConf, env environmentVars, log wlog.Logger) error {
 	router := mux.NewRouter()
 
-	server := handlers.NewServer(router, env, log)
+	ai := ai.New()
+	server := handlers.NewServer(router, ai, log)
 	if err := server.RegisterRoutes(); err != nil {
 		return err
 	}

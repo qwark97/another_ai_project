@@ -8,10 +8,8 @@ import (
 	"github.com/vargspjut/wlog"
 
 	"github.com/gorilla/mux"
-	"github.com/qwark97/assistant/server/agent"
+	"github.com/qwark97/assistant/server/ai"
 	"github.com/qwark97/assistant/server/handlers"
-	"github.com/qwark97/assistant/server/storage/data"
-	"github.com/qwark97/assistant/server/storage/embedding"
 )
 
 func main() {
@@ -31,24 +29,10 @@ func newLogger() wlog.Logger {
 }
 
 func run(conf *flagsConf, env environmentVars, log wlog.Logger) error {
-	var a agent.Agent
-	{
-		d := data.New()
-
-		e := embedding.New(log)
-		if err := e.Connect(env["QDRANT_ADDR"]); err != nil {
-			log.Fatal(err)
-		}
-		defer e.Disconnect()
-		log.Info("connected to embedding engine")
-
-		llmsGroup := agent.NewLLMsGroup(env, log)
-
-		a = agent.New(d, e, llmsGroup, log)
-	}
-
 	router := mux.NewRouter()
-	server := handlers.NewServer(router, a, log)
+
+	ai := ai.New()
+	server := handlers.NewServer(router, ai, log)
 	if err := server.RegisterRoutes(); err != nil {
 		return err
 	}

@@ -1,4 +1,4 @@
-module github.com/qwark97/assistant/server
+module github.com/qwark97/another_ai_project/server
 
 go 1.21.3
 
@@ -9,4 +9,4 @@ require (
 	github.com/vargspjut/wlog v1.0.11
 )
 
-replace github.com/qwark97/assistant/llms => ../llms
+replace github.com/qwark97/another_ai_project/llms => ../llms

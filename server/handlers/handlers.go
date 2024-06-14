@@ -10,7 +10,7 @@ import (
 
 	"github.com/gorilla/mux"
 	"github.com/gorilla/websocket"
-	"github.com/qwark97/assistant/server/model"
+	"github.com/qwark97/another_ai_project/server/model"
 )
 
 type AI interface {

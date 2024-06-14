@@ -8,8 +8,8 @@ import (
 	"github.com/vargspjut/wlog"
 
 	"github.com/gorilla/mux"
-	"github.com/qwark97/assistant/server/ai"
-	"github.com/qwark97/assistant/server/handlers"
+	"github.com/qwark97/another_ai_project/server/ai"
+	"github.com/qwark97/another_ai_project/server/handlers"
 )
 
 func main() {

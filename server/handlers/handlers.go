@@ -13,17 +13,17 @@ import (
 	"github.com/qwark97/another_ai_project/server/model"
 )
 
-type AI interface {
-	Ask(ctx context.Context, request model.Request) model.Response
+type Actioner interface {
+	Act(ctx context.Context, request model.Request) model.Response
 }
 
 type Server struct {
 	router *mux.Router
-	ai     AI
+	ai     Actioner
 	log    wlog.Logger
 }
 
-func NewServer(router *mux.Router, ai AI, log wlog.Logger) Server {
+func NewServer(router *mux.Router, ai Actioner, log wlog.Logger) Server {
 	return Server{
 		router: router,
 		ai:     ai,
@@ -52,7 +52,7 @@ func (s Server) interaction(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	response := s.ai.Ask(ctx, data)
+	response := s.ai.Act(ctx, data)
 
 	if err := json.NewEncoder(w).Encode(response); err != nil {
 		s.log.Error(err)
@@ -95,7 +95,7 @@ func (s Server) chat(w http.ResponseWriter, r *http.Request) {
 			ctx, close := context.WithTimeout(ctx, 5*time.Minute)
 			defer close()
 
-			response := s.ai.Ask(ctx, request)
+			response := s.ai.Act(ctx, request)
 
 			err = conn.WriteJSON(response)
 			if err != nil {

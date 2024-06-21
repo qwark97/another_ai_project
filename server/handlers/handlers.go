@@ -53,6 +53,7 @@ func (s Server) interaction(w http.ResponseWriter, r *http.Request) {
 	}
 
 	response := s.ai.Act(ctx, data)
+	s.log.Debug("response:", response)
 
 	if err := json.NewEncoder(w).Encode(response); err != nil {
 		s.log.Error(err)
@@ -97,6 +98,7 @@ func (s Server) chat(w http.ResponseWriter, r *http.Request) {
 
 			response := s.ai.Act(ctx, request)
 
+			s.log.Debug("response:", response)
 			err = conn.WriteJSON(response)
 			if err != nil {
 				s.log.Errorf("failed to write the response message: %s", err.Error())

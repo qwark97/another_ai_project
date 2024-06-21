@@ -9,7 +9,7 @@ import (
 
 	"github.com/vargspjut/wlog"
 
-	"github.com/qwark97/assistant/llms/model"
+	"github.com/qwark97/another_ai_project/llms/model"
 )
 
 type api struct {
@@ -20,7 +20,6 @@ type api struct {
 }
 
 func (a api) askModel(ctx context.Context, r model.Request) (model.Response, error) {
-	a.log.Debugf("full request: %+v", r)
 	var container model.Response
 	uri := fmt.Sprintf("%s%s", a.url, "chat/completions")
 
@@ -28,6 +27,7 @@ func (a api) askModel(ctx context.Context, r model.Request) (model.Response, err
 	if err != nil {
 		return container, err
 	}
+	a.log.Debug("%s", string(data))
 
 	body := bytes.NewReader(data)
 
@@ -45,16 +45,16 @@ func (a api) askModel(ctx context.Context, r model.Request) (model.Response, err
 	}
 	defer response.Body.Close()
 
-	if response.StatusCode != http.StatusOK {
-		a.log.Error(response.Status)
-		return container, fmt.Errorf(response.Status)
-	}
-
 	err = json.NewDecoder(response.Body).Decode(&container)
 	if err != nil {
 		return container, err
 	}
 	a.log.Debugf("full response: %+v", container)
+
+	if response.StatusCode != http.StatusOK {
+		a.log.Error(response.Status)
+		return container, fmt.Errorf(response.Status)
+	}
 
 	return container, nil
 }

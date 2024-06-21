@@ -10,3 +10,4 @@ require (
 )
 
 replace github.com/qwark97/another_ai_project/llms => ../llms
+replace github.com/qwark97/another_ai_project/llms/model => ../llms/model

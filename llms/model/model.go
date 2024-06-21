@@ -6,16 +6,24 @@ type Question struct {
 }
 
 type Message struct {
-	Role    string `json:"role"`
-	Content string `json:"content"`
-	// FunctionCall *FunctionCall `json:"function_call,omitempty"`
+	Role         string        `json:"role"`
+	Content      string        `json:"content"`
+	FunctionCall *FunctionCall `json:"function_call,omitempty"`
 }
 
 type Response struct {
-	ID      string   `json:"id"`
-	Model   string   `json:"model"`
-	Choices []Choice `json:"choices"`
-	Usage   Usage    `json:"usage"`
+	ID      string         `json:"id"`
+	Model   string         `json:"model"`
+	Choices []Choice       `json:"choices"`
+	Usage   Usage          `json:"usage"`
+	Error   *ErrorResponse `json:"error,omitempty"`
+}
+
+type ErrorResponse struct {
+	Message string `json:"message"`
+	Type    string `json:"type"`
+	Param   string `json:"param"`
+	Code    string `json:"code"`
 }
 
 type EmbeddingResponse struct {

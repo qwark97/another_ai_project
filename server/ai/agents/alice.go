@@ -21,6 +21,7 @@ type LLM interface {
 type Todoist interface {
 	GetActiveTasks(ctx context.Context, params todoist.GetActiveTasksParams) ([]todoist.Task, error)
 	GetProjects(ctx context.Context) ([]todoist.Project, error)
+	CreateTask(ctx context.Context, task todoist.Task) (todoist.Task, error)
 }
 
 type Alice struct {
@@ -61,17 +62,26 @@ func (a *Alice) definedFunctions() functions {
 							Type:        llms.String,
 							Description: "Information which describes what needs to be done",
 						},
-						"date": {
+						"due_string": {
 							Type:        llms.String,
 							Description: fmt.Sprintf("Information about the time when task should be done in format YYYY-MM-DD. By default pick '%s'.", time.Now().Format(time.DateOnly)),
 						},
 					},
-					Required: []string{"content", "date"},
+					Required: []string{"content", "due_string"},
 				},
 			},
 			action: func(ctx context.Context, argumentsJSON string) (string, error) {
-				a.log.Info("create_task")
-				return "create_task", nil
+				var task todoist.Task
+				err := json.Unmarshal([]byte(argumentsJSON), &task)
+				if err != nil {
+					return "", err
+				}
+				createdTask, err := a.todoist.CreateTask(ctx, task)
+				if err != nil {
+					return "", err
+				}
+				response := fmt.Sprintf(`Created task: %s with ID: %s`, createdTask.Content, createdTask.ID)
+				return response, nil
 			},
 		},
 		"list_tasks": skill{

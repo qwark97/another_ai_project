@@ -51,7 +51,7 @@ export default {
             console.log('Parsed message:', msg);
             let historyMsg = {
                 type: 'assistant',
-                message: msg["response"]
+                message: msg["answer"]
             }
             this.currentConversationID = msg["converation_id"];
             this.history.push(historyMsg);

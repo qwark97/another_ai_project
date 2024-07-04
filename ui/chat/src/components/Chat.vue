@@ -53,7 +53,7 @@ export default {
                 type: 'assistant',
                 message: msg["answer"]
             }
-            this.currentConversationID = msg["converation_id"];
+            this.currentConversationID = msg["conversation_id"];
             this.history.push(historyMsg);
         },
         connect() {

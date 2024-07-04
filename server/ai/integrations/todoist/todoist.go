@@ -8,6 +8,7 @@ import (
 	"io"
 	"net/http"
 	"net/url"
+	"time"
 )
 
 const (
@@ -91,7 +92,7 @@ func addFilters(address string, filters map[string]string) string {
 func (t Todoist) GetActiveTasks(ctx context.Context, params GetActiveTasksParams) ([]Task, error) {
 	var result []Task
 	filter := map[string]string{
-		"filter": params.Date + " | overdue",
+		"filter": t.filter(params),
 	}
 	response, err := t.request(ctx, http.MethodGet, tasksURI, filter, nil)
 	if err != nil {
@@ -102,6 +103,13 @@ func (t Todoist) GetActiveTasks(ctx context.Context, params GetActiveTasksParams
 		return result, err
 	}
 	return result, nil
+}
+
+func (t Todoist) filter(params GetActiveTasksParams) string {
+	if params.Date == "" {
+		params.Date = time.Now().Format(time.DateOnly)
+	}
+	return params.Date + " | overdue"
 }
 
 func (t Todoist) GetProjects(ctx context.Context) ([]Project, error) {

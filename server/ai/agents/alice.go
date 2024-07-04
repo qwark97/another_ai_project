@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"strings"
 	"time"
 
 	llms "github.com/qwark97/another_ai_project/llms/model"
@@ -114,8 +115,9 @@ func (a *Alice) definedFunctions() functions {
 				formattedTasks := func() string {
 					var res string
 					for _, task := range tasks {
-						res += ", \"" + task.Content + "\""
+						res += fmt.Sprintf("%s(id: %s), ", task.Content, task.ID)
 					}
+					res, _ = strings.CutSuffix(res, ", ")
 					return res
 				}()
 

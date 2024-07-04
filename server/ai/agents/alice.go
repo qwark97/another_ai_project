@@ -172,7 +172,7 @@ func (a *Alice) definedFunctions() functions {
 // A: closed X
 func (a *Alice) Do(ctx context.Context, instruction string, history []model.HistoryMessage) string {
 	request := llms.Request{
-		Model: llms.GPT_3_5_Turbo,
+		Model: llms.GPT_4,
 		Messages: func() []llms.Message {
 			messages := []llms.Message{}
 			for _, m := range history {

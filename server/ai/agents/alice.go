@@ -22,6 +22,7 @@ type Todoist interface {
 	GetActiveTasks(ctx context.Context, params todoist.GetActiveTasksParams) ([]todoist.Task, error)
 	GetProjects(ctx context.Context) ([]todoist.Project, error)
 	CreateTask(ctx context.Context, task todoist.Task) (todoist.Task, error)
+	CloseTask(ctx context.Context, taskID string) error
 }
 
 type Alice struct {
@@ -121,10 +122,10 @@ func (a *Alice) definedFunctions() functions {
 				return "Tasks to do: " + formattedTasks, nil
 			},
 		},
-		"close_task": skill{
+		"finish_task": skill{
 			functionCall: llms.Function{
-				Name:        "close_task",
-				Description: "Closes task using it's name and taskID. Task is closed when it has been done",
+				Name:        "finish_task",
+				Description: "Finishes task using it's name and taskID. Task is finished when it has been done, closed, removed etc.",
 				Parameters: llms.Parameters{
 					Type: "object",
 					Properties: map[string]llms.Parameter{
@@ -141,8 +142,22 @@ func (a *Alice) definedFunctions() functions {
 				},
 			},
 			action: func(ctx context.Context, argumentsJSON string) (string, error) {
-				a.log.Info("close_task")
-				return "close_task", nil
+				type Container struct {
+					Name string `json:"name"`
+					ID   string `json:"taskID"`
+				}
+				var container Container
+				err := json.Unmarshal([]byte(argumentsJSON), &container)
+				if err != nil {
+					return "", err
+				}
+
+				err = a.todoist.CloseTask(ctx, container.ID)
+				if err != nil {
+					return "", err
+				}
+				response := fmt.Sprintf(`Closed task: %s`, container.Name)
+				return response, nil
 			},
 		},
 	}

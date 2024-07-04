@@ -3,6 +3,7 @@ package data
 import (
 	"context"
 	"fmt"
+	"slices"
 	"strings"
 
 	"github.com/google/uuid"
@@ -32,5 +33,12 @@ func (s *Data) Load(ctx context.Context, conversationID uuid.UUID) ([]model.Hist
 			}
 		}
 	}
+	slices.SortFunc(res, func(a, b model.HistoryMessage) int {
+		if a.InsertTime.After(b.InsertTime) {
+			return 1
+		} else {
+			return -1
+		}
+	})
 	return res, nil
 }

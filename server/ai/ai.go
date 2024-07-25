@@ -42,24 +42,24 @@ func (ai AI) Act(ctx context.Context, request model.Request) model.Response {
 		response.Answer = "sorry, something went wrong"
 		return response
 	}
-	go ai.remember(ctx, response.ConversationID, model.User, request.Instruction)
+	go ai.remember(context.WithoutCancel(ctx), response.ConversationID, model.User, request.Instruction)
 
 	agent := ai.agents.Select(ctx, request.Instruction, historyMessages)
 	answer := agent.Do(ctx, request.Instruction, historyMessages)
 	response.Answer = answer
 
-	go ai.remember(ctx, response.ConversationID, model.Assistant, response.Answer)
+	go ai.remember(context.WithoutCancel(ctx), response.ConversationID, model.Assistant, response.Answer)
 
 	return response
 }
 
 func (ai AI) remember(ctx context.Context, conversationID uuid.UUID, owner model.Owner, information string) {
-	ctx, cancel := context.WithTimeout(context.WithoutCancel(ctx), time.Second*3)
+	ctx, cancel := context.WithTimeout(ctx, time.Second*3)
 	defer cancel()
 	msg := model.NewHistoryMessage(conversationID, owner, information)
 	err := ai.history.Save(ctx, msg)
 	if err != nil {
-		ai.log.Error("failed to save assistant message in history:", err)
+		ai.log.Error("failed to save %s's message in history:", owner, err)
 	}
 }
 

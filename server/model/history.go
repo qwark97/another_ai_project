@@ -6,23 +6,23 @@ import (
 	"github.com/google/uuid"
 )
 
-type owner string
+type Owner string
 
 const (
-	System    owner = "system"
-	User      owner = "user"
-	Assistant owner = "assistant"
+	System    Owner = "system"
+	User      Owner = "user"
+	Assistant Owner = "assistant"
 )
 
 type HistoryMessage struct {
 	ID             uuid.UUID
 	ConversationID uuid.UUID
-	Producer       owner
+	Producer       Owner
 	InsertTime     time.Time
 	Content        string
 }
 
-func NewHistoryMessage(conversationID uuid.UUID, producer owner, content string) HistoryMessage {
+func NewHistoryMessage(conversationID uuid.UUID, producer Owner, content string) HistoryMessage {
 	return HistoryMessage{
 		ID:             uuid.New(),
 		ConversationID: conversationID,

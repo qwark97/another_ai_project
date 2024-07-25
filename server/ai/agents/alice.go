@@ -7,10 +7,10 @@ import (
 	"strings"
 	"time"
 
+	"github.com/qwark97/another_ai_project/alog"
 	llms "github.com/qwark97/another_ai_project/llms/model"
 	"github.com/qwark97/another_ai_project/server/ai/integrations/todoist"
 	"github.com/qwark97/another_ai_project/server/model"
-	"github.com/vargspjut/wlog"
 )
 
 const failureResponse = "Sorry, I can't now help you with that, please try again"
@@ -29,11 +29,11 @@ type Todoist interface {
 type Alice struct {
 	model.Agent
 	llm     LLM
-	log     wlog.Logger
+	log     alog.Logger
 	todoist Todoist
 }
 
-func NewAlice(llm LLM, todoist Todoist, log wlog.Logger) *Alice {
+func NewAlice(llm LLM, todoist Todoist, log alog.Logger) *Alice {
 	return &Alice{
 		llm:     llm,
 		log:     log,
@@ -197,7 +197,6 @@ func (a *Alice) Do(ctx context.Context, instruction string, history []model.Hist
 	}
 	response, err := a.llm.Ask(ctx, request)
 	if err != nil {
-		a.log.Error("alice:", err)
 		return failureResponse
 	}
 	if len(response.Choices) == 0 {

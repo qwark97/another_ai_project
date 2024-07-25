@@ -4,8 +4,7 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/vargspjut/wlog"
-
+	"github.com/qwark97/another_ai_project/alog"
 	"github.com/qwark97/another_ai_project/llms/model"
 )
 
@@ -16,10 +15,10 @@ const (
 
 type LLM struct {
 	api api
-	log wlog.Logger
+	log alog.Logger
 }
 
-func New(key string, log wlog.Logger) LLM {
+func New(key string, log alog.Logger) LLM {
 	return LLM{
 		api: api{
 			log:          log,

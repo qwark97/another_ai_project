@@ -3,11 +3,11 @@ package ai
 import (
 	"context"
 
+	"github.com/qwark97/another_ai_project/alog"
 	"github.com/qwark97/another_ai_project/llms/openai"
 	"github.com/qwark97/another_ai_project/server/ai/agents"
 	"github.com/qwark97/another_ai_project/server/ai/integrations/todoist"
 	"github.com/qwark97/another_ai_project/server/model"
-	"github.com/vargspjut/wlog"
 )
 
 type Doer interface {
@@ -16,11 +16,11 @@ type Doer interface {
 
 type Agents struct {
 	llm     openai.LLM
-	log     wlog.Logger
+	log     alog.Logger
 	todoist todoist.Todoist
 }
 
-func NewAgents(llm openai.LLM, todoist todoist.Todoist, log wlog.Logger) Agents {
+func NewAgents(llm openai.LLM, todoist todoist.Todoist, log alog.Logger) Agents {
 	return Agents{
 		llm:     llm,
 		log:     log,

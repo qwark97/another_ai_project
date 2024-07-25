@@ -6,10 +6,9 @@ import (
 	"net/http"
 	"time"
 
-	"github.com/vargspjut/wlog"
-
 	"github.com/gorilla/mux"
 	"github.com/gorilla/websocket"
+	"github.com/qwark97/another_ai_project/alog"
 	"github.com/qwark97/another_ai_project/server/model"
 )
 
@@ -20,10 +19,10 @@ type Actioner interface {
 type Server struct {
 	router *mux.Router
 	ai     Actioner
-	log    wlog.Logger
+	log    alog.Logger
 }
 
-func NewServer(router *mux.Router, ai Actioner, log wlog.Logger) Server {
+func NewServer(router *mux.Router, ai Actioner, log alog.Logger) Server {
 	return Server{
 		router: router,
 		ai:     ai,
@@ -39,6 +38,12 @@ func (s Server) RegisterRoutes() error {
 }
 
 func (s Server) interaction(w http.ResponseWriter, r *http.Request) {
+	s.log.Info("%s %s", r.Method, r.URL)
+	now := time.Now()
+	defer func(n time.Time) {
+		s.log.Debug("%s %s took %s", r.Method, r.URL, time.Since(n).Round(time.Millisecond))
+	}(now)
+
 	ctx, cancel := context.WithTimeout(r.Context(), 5*time.Minute)
 	defer cancel()
 
@@ -47,22 +52,27 @@ func (s Server) interaction(w http.ResponseWriter, r *http.Request) {
 	var data model.Request
 	err := json.NewDecoder(r.Body).Decode(&data)
 	if err != nil {
-		s.log.Error(err)
+		s.log.Error(err.Error())
 		w.WriteHeader(http.StatusBadRequest)
 		return
 	}
 
 	response := s.ai.Act(ctx, data)
-	s.log.Debug("response:", response)
 
 	if err := json.NewEncoder(w).Encode(response); err != nil {
-		s.log.Error(err)
+		s.log.Error(err.Error())
 		w.WriteHeader(http.StatusInternalServerError)
 		return
 	}
 }
 
 func (s Server) chat(w http.ResponseWriter, r *http.Request) {
+	s.log.Info("%s (ws) %s", r.Method, r.URL)
+	now := time.Now()
+	defer func(n time.Time) {
+		s.log.Debug("%s %s took %s", r.Method, r.URL, time.Since(n).Round(time.Millisecond))
+	}(now)
+
 	var upgrader = websocket.Upgrader{
 		ReadBufferSize:  1024,
 		WriteBufferSize: 1024,
@@ -70,11 +80,10 @@ func (s Server) chat(w http.ResponseWriter, r *http.Request) {
 			return true
 		},
 	}
-	s.log.Infof("received %s request", r.Method)
 
 	conn, err := upgrader.Upgrade(w, r, nil)
 	if err != nil {
-		s.log.Errorf("upgrader: %v", err)
+		s.log.Error(err.Error())
 		return
 	}
 	defer conn.Close()
@@ -86,9 +95,9 @@ func (s Server) chat(w http.ResponseWriter, r *http.Request) {
 		err := conn.ReadJSON(&request)
 		if err != nil {
 			if websocket.IsCloseError(err, websocket.CloseGoingAway, websocket.CloseAbnormalClosure) {
-				s.log.Info("closing connection")
+				s.log.Info("closing connection with %s", conn.RemoteAddr())
 			} else {
-				s.log.Errorf("failed to read the message: %s", err.Error())
+				s.log.Error("failed to read the message: %s", err.Error())
 			}
 			return
 		}
@@ -98,10 +107,9 @@ func (s Server) chat(w http.ResponseWriter, r *http.Request) {
 
 			response := s.ai.Act(ctx, request)
 
-			s.log.Debug("response:", response)
 			err = conn.WriteJSON(response)
 			if err != nil {
-				s.log.Errorf("failed to write the response message: %s", err.Error())
+				s.log.Error(err.Error())
 				return
 			}
 		}()

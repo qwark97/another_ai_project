@@ -5,8 +5,8 @@ import (
 	"time"
 
 	"github.com/google/uuid"
+	"github.com/qwark97/another_ai_project/alog"
 	"github.com/qwark97/another_ai_project/server/model"
-	"github.com/vargspjut/wlog"
 )
 
 type HistoryKeeper interface {
@@ -21,10 +21,10 @@ type AgentSelector interface {
 type AI struct {
 	history HistoryKeeper
 	agents  AgentSelector
-	log     wlog.Logger
+	log     alog.Logger
 }
 
-func New(h HistoryKeeper, a AgentSelector, log wlog.Logger) AI {
+func New(h HistoryKeeper, a AgentSelector, log alog.Logger) AI {
 	return AI{
 		history: h,
 		agents:  a,
@@ -38,6 +38,7 @@ func (ai AI) Act(ctx context.Context, request model.Request) model.Response {
 
 	historyMessages, err := ai.history.Load(ctx, response.ConversationID)
 	if err != nil {
+		ai.log.Error("failed to load user message from history:", err)
 		response.Answer = "sorry, something went wrong"
 		return response
 	}

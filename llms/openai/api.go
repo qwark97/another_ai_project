@@ -7,13 +7,12 @@ import (
 	"fmt"
 	"net/http"
 
-	"github.com/vargspjut/wlog"
-
+	"github.com/qwark97/another_ai_project/alog"
 	"github.com/qwark97/another_ai_project/llms/model"
 )
 
 type api struct {
-	log          wlog.Logger
+	log          alog.Logger
 	url          string
 	embeddingURL string
 	key          string
@@ -49,7 +48,7 @@ func (a api) askModel(ctx context.Context, r model.Request) (model.Response, err
 	if err != nil {
 		return container, err
 	}
-	a.log.Debugf("full response: %+v", container)
+	a.log.Debug("full response: %+v", container)
 
 	if response.StatusCode != http.StatusOK {
 		a.log.Error(response.Status)
@@ -60,7 +59,7 @@ func (a api) askModel(ctx context.Context, r model.Request) (model.Response, err
 }
 
 func (a api) getEmbeddings(ctx context.Context, r model.EmbeddingRequest) (model.EmbeddingResponse, error) {
-	a.log.Debugf("full request: %+v", r)
+	a.log.Debug("full request: %+v", r)
 	var container model.EmbeddingResponse
 
 	data, err := json.Marshal(r)
@@ -93,7 +92,7 @@ func (a api) getEmbeddings(ctx context.Context, r model.EmbeddingRequest) (model
 	if err != nil {
 		return container, err
 	}
-	a.log.Debugf("full response: %+v", container)
+	a.log.Debug("full response: %+v", container)
 
 	return container, nil
 }

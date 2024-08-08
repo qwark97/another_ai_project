@@ -12,6 +12,8 @@ import (
 	"github.com/qwark97/another_ai_project/server/model"
 )
 
+const chatAddress = "http://localhost:3000/"
+
 type Actioner interface {
 	Act(ctx context.Context, request model.Request) model.Response
 }
@@ -33,6 +35,7 @@ func NewServer(router *mux.Router, ai Actioner, log alog.Logger) Server {
 func (s Server) RegisterRoutes() error {
 	s.router.HandleFunc("/api/v1/interaction", s.interaction).Methods("POST")
 	s.router.HandleFunc("/api/v1/chat", s.chat)
+	s.router.HandleFunc("/auth", s.auth)
 
 	return nil
 }
@@ -114,4 +117,10 @@ func (s Server) chat(w http.ResponseWriter, r *http.Request) {
 			}
 		}()
 	}
+}
+
+func (s Server) auth(w http.ResponseWriter, r *http.Request) {
+	code := r.URL.Query().Get("code")
+	s.log.Info("code %s", code)
+	http.Redirect(w, r, chatAddress, http.StatusFound)
 }
